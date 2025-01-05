@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './Header';
 import { NetworkGraph } from './network/NetworkGraph';
 import { ControlPanel } from './control/ControlPanel';
@@ -8,7 +8,7 @@ import { SimulationSettings } from '../types/simulation';
 import { Node } from '../types/node';
 import { mockNodes } from '../utils/mockData';
 import { useNotifications } from '../hooks/useNotifications';
-import { generateNode } from '../utils/nodeGenerator';
+import { generateNode, resetNodeCounter } from '../utils/nodeGenerator';
 
 export function Dashboard() {
   const [isRunning, setIsRunning] = useState(false);
@@ -21,9 +21,22 @@ export function Dashboard() {
     faultInjectionRate: 0.3,
   });
 
+  // Reset node counter when component mounts
+  useEffect(() => {
+    resetNodeCounter();
+  }, []);
+
   const handleAddNode = useCallback(() => {
     const newNode = generateNode();
-    setNodes(prev => [...prev, newNode]);
+    setNodes(prev => {
+      // Check if node with this ID already exists
+      if (prev.some(node => node.id === newNode.id)) {
+        console.error('Duplicate node ID generated');
+        return prev;
+      }
+      return [...prev, newNode];
+    });
+    
     addNotification(
       'Node Added',
       `Node ${newNode.id} has been added to the network`,
@@ -42,6 +55,7 @@ export function Dashboard() {
   const handleReset = useCallback(() => {
     setNodes(mockNodes);
     setSelectedNode(null);
+    resetNodeCounter(); // Reset counter when resetting nodes
     addNotification('Simulation Reset', 'All nodes restored to initial state');
   }, [addNotification]);
 
@@ -54,7 +68,7 @@ export function Dashboard() {
       );
       return;
     }
-
+    
     setNodes(prev => prev.map(node => 
       node.id === selectedNode.id
         ? {
@@ -70,13 +84,20 @@ export function Dashboard() {
           }
         : node
     ));
-
+    
     addNotification(
       'Fault Injected',
       `Node ${selectedNode.id} has been compromised`,
       'error'
     );
   }, [selectedNode, addNotification]);
+
+  // Clear selected node if it's removed
+  useEffect(() => {
+    if (selectedNode && !nodes.some(node => node.id === selectedNode.id)) {
+      setSelectedNode(null);
+    }
+  }, [nodes, selectedNode]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">

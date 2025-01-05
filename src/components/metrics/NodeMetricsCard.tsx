@@ -14,26 +14,26 @@ export function NodeMetricsCard({ metrics, lastUpdated }: NodeMetricsCardProps) 
       
       <div className="space-y-4">
         <div className="flex items-center">
-          <Clock className="w-5 h-5 text-indigo-500 mr-2" />
+          <Clock className="w-5 h-5 text-indigo-500 dark:text-indigo-400 mr-2" />
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Latency</p>
-            <p className="font-medium">{metrics.latency}ms</p>
+            <p className="font-medium text-gray-900 dark:text-white">{metrics.latency}ms</p>
           </div>
         </div>
 
         <div className="flex items-center">
-          <Cpu className="w-5 h-5 text-indigo-500 mr-2" />
+          <Cpu className="w-5 h-5 text-indigo-500 dark:text-indigo-400 mr-2" />
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Resource Usage</p>
-            <p className="font-medium">{(metrics.resourceUsage * 100).toFixed(1)}%</p>
+            <p className="font-medium text-gray-900 dark:text-white">{(metrics.resourceUsage * 100).toFixed(1)}%</p>
           </div>
         </div>
 
         <div className="flex items-center">
-          <Activity className="w-5 h-5 text-indigo-500 mr-2" />
+          <Activity className="w-5 h-5 text-indigo-500 dark:text-indigo-400 mr-2" />
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Anomaly Score</p>
-            <div className="w-full h-2 bg-gray-200 rounded-full mt-1">
+            <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-1">
               <div 
                 className={`h-full rounded-full ${
                   metrics.anomalyScore > 0.7 ? 'bg-red-500' :

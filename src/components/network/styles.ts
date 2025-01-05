@@ -1,48 +1,52 @@
-import { Stylesheet } from 'cytoscape';
+import { StylesheetCSS } from 'cytoscape';
 
-export const networkStyles: Stylesheet[] = [
+export const networkStyles: StylesheetCSS[] = [
   {
     selector: 'node',
-    style: {
+    css: {
       'background-color': '#E5E7EB',
       'label': 'data(label)',
-      'color': '#374151',
-      'text-valign': 'center',
+      'color': '#666',
+      'text-valign': 'bottom',
       'text-halign': 'center',
-      'width': 40,
-      'height': 40,
-      'border-width': 2,
+      'text-margin-y': 10,
+      'font-size': 14,
+      'width': 50,
+      'height': 50,
+      'border-width': 3,
       'border-color': '#E5E7EB',
-      'transition-property': 'background-color, border-color',
-      'transition-duration': '0.3s'
+      'shape': 'ellipse'
     }
   },
   {
     selector: 'edge',
-    style: {
+    css: {
       'width': 2,
-      'line-color': '#E5E7EB',
+      'line-color': '#94A3B8',
       'opacity': 0.6,
-      'curve-style': 'bezier'
+      'curve-style': 'bezier',
+      'target-arrow-shape': 'triangle',
+      'target-arrow-color': '#94A3B8',
+      'arrow-scale': 0.8
     }
   },
   {
     selector: 'node[status = "healthy"]',
-    style: {
+    css: {
       'background-color': '#10B981',
       'border-color': '#059669'
     }
   },
   {
     selector: 'node[status = "compromised"]',
-    style: {
+    css: {
       'background-color': '#EF4444',
       'border-color': '#DC2626'
     }
   },
   {
     selector: 'node[status = "isolated"]',
-    style: {
+    css: {
       'background-color': '#F59E0B',
       'border-color': '#D97706',
       'border-style': 'dashed'
@@ -50,16 +54,18 @@ export const networkStyles: Stylesheet[] = [
   },
   {
     selector: 'node[status = "restored"]',
-    style: {
+    css: {
       'background-color': '#6366F1',
       'border-color': '#4F46E5'
     }
   },
   {
-    selector: 'node:selected',
-    style: {
-      'border-width': 3,
-      'border-color': '#3B82F6'
+    selector: ':selected',
+    css: {
+      'border-width': 4,
+      'border-color': '#3B82F6',
+      'overlay-opacity': 0.2,
+      'overlay-color': '#3B82F6'
     }
   }
 ];

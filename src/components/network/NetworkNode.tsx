@@ -14,6 +14,12 @@ export function NetworkNode({ node, onClick }: NetworkNodeProps) {
     restored: 'bg-node-restored',
   };
 
+  // Check if node is defined and has the 'status' property
+  if (!node || !node.id || !node.status) {
+    console.error('Invalid node data:', node);
+    return null; // Return null to prevent rendering when node is invalid
+  }
+
   return (
     <div
       onClick={() => onClick(node)}

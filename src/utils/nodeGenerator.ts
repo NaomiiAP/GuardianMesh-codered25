@@ -15,3 +15,8 @@ export function generateNode(): Node {
     lastUpdated: new Date().toISOString(),
   };
 }
+
+// Function to reset the nodeCounter
+export function resetNodeCounter() {
+  nodeCounter = 4; // Reset counter to its initial value
+}
