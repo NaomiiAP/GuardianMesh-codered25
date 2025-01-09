@@ -2,7 +2,6 @@ import React, { useState, useCallback, useEffect } from "react";
 import { Header } from "./Header";
 import { NetworkGraph } from "./network/NetworkGraph";
 import { NotificationCenter } from "./notifications/NotificationCenter";
-import { NodeMetricsCard } from "./metrics/NodeMetricsCard";
 import { Node } from "../types/node";
 import { mockNodes } from "../utils/mockData";
 import { useNotifications } from "../hooks/useNotifications";
@@ -13,7 +12,7 @@ export function Dashboard() {
   const [isRunning, setIsRunning] = useState(false);
   const [nodes, setNodes] = useState<Node[]>(mockNodes);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const [logOutput, setLogOutput] = useState<string | null>(null); // State for log output
+  const [logOutput, setLogOutput] = useState<string | null>(null);
   const { notifications, addNotification } = useNotifications();
 
   useEffect(() => {
@@ -36,6 +35,13 @@ export function Dashboard() {
     );
   }, [addNotification]);
 
+  const handleRename = useCallback((nodeId: string, newName: string) => {
+    setNodes(nodes => nodes.map(node => 
+      node.id === nodeId ? { ...node, name: newName } : node
+    ));
+    addNotification("Node Updated", `Node ${nodeId} renamed to ${newName}`, "success");
+  }, [addNotification]);
+
   const handleToggleSimulation = () => {
     setIsRunning(!isRunning);
     addNotification(
@@ -53,11 +59,9 @@ export function Dashboard() {
 
   const handleNodeClick = async (node: Node) => {
     setSelectedNode(node);
-
-    // Fetch log output dynamically based on node ID
     try {
       const response = await axios.get(`http://localhost:5000/run-log${node.id}`);
-      setLogOutput(response.data.output); // Dynamically fetch the log output
+      setLogOutput(response.data.output);
     } catch (error) {
       console.error("Error fetching log output:", error);
       setLogOutput("Error fetching log output");
@@ -75,20 +79,19 @@ export function Dashboard() {
       <NotificationCenter notifications={notifications} />
       <Header />
       <main className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 gap-4">
-        {/* Network Graph Section */}
         <div className="flex-grow flex items-center justify-center w-2/3 h-[60vh] bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden text-white">
           <NetworkGraph
             nodes={nodes}
-            onNodeClick={handleNodeClick} // Pass handleNodeClick as the onNodeClick prop
+            onNodeClick={handleNodeClick}
             onAddNode={handleAddNode}
+            onRename={handleRename}
           />
         </div>
 
-        {/* Node Details Section */}
         {selectedNode && (
           <div className="w-1/3 bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg overflow-y-auto max-h-[calc(100vh-100px)] text-white">
             <h2 className="text-xl font-bold mb-4">
-              Node {selectedNode.id} Details
+              {selectedNode.name || `Node ${selectedNode.id}`} Details
             </h2>
             <p>
               <strong>Status:</strong> {selectedNode.status}
@@ -101,8 +104,6 @@ export function Dashboard() {
               <li>Resource Usage: {selectedNode.metrics.resourceUsage}</li>
               <li>Latency: {selectedNode.metrics.latency} ms</li>
             </ul>
-            <hr className="my-4" />
-            <h3 className="text-lg font-bold mb-2">Command Outputs</h3>
             <div className="mt-4">
               <strong>Log Output:</strong>
               <pre className="bg-gray-700 p-2 rounded text-sm overflow-x-auto">

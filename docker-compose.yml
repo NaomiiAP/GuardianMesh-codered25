@@ -6,6 +6,9 @@ services:
       - my_network
     environment:
       - PYTHONUNBUFFERED=1
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
 
   node2:
     build: .
@@ -13,6 +16,9 @@ services:
       - my_network
     environment:
       - PYTHONUNBUFFERED=1
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
 
   node3:
     build: .
@@ -20,6 +26,9 @@ services:
       - my_network
     environment:
       - PYTHONUNBUFFERED=1
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
 
 networks:
   my_network:

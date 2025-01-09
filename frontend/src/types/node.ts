@@ -7,7 +7,7 @@ export interface NodeMetrics {
 }
 
 export interface HealthPrediction {
-  risk: number;  // 0-1 scale
+  risk: number;
   timeFrame: '1h' | '1d' | '1w';
   reason: string;
   predictedAt: string;
@@ -25,6 +25,7 @@ export interface NodeComment {
 
 export interface Node {
   id: string;
+  name?: string;
   status: NodeStatus;
   metrics: NodeMetrics;
   lastUpdated: string;

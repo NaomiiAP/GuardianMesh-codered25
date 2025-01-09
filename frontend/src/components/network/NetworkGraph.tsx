@@ -9,108 +9,82 @@ interface NetworkGraphProps {
   nodes: Node[];
   onNodeClick: (node: Node) => void;
   onAddNode: () => void;
+  onRename: (nodeId: string, newName: string) => void;
 }
 
-export function NetworkGraph({ nodes, onNodeClick, onAddNode }: NetworkGraphProps) {
+export function NetworkGraph({ nodes, onNodeClick, onAddNode, onRename }: NetworkGraphProps) {
   const [cy, setCy] = useState<Cytoscape.Core | null>(null);
 
-  // Create elements whenever nodes change
   const elements = React.useMemo(() => {
     if (!nodes?.length) return [];
-
     const nodeElements = nodes.map(node => ({
-      data: { 
-        id: node.id.toString(), // Ensure ID is a string
+      data: {
+        id: node.id.toString(),
         status: node.status,
-        label: `Node ${node.id}`,
+        label: node.name || `Node ${node.id}`,
         node: node,
       }
     }));
-
-    const edges = nodes.flatMap((node, i) => 
+    const edges = nodes.flatMap((node, i) =>
       nodes.slice(i + 1).map(target => ({
         data: {
           id: `${node.id}-${target.id}`,
-          source: node.id.toString(), // Ensure source is a string
-          target: target.id.toString(), // Ensure target is a string
+          source: node.id.toString(),
+          target: target.id.toString(),
         }
       }))
     );
-
     return [...nodeElements, ...edges];
   }, [nodes]);
 
-  // Update layout when elements change
-  useEffect(() => {
-    if (cy && elements.length > 0) {
-      try {
-        cy.layout({ 
-          name: 'circle',
-          padding: 50,
-          animate: true,
-        }).run();
-      } catch (error) {
-        console.error('Layout error:', error);
-      }
-    }
-  }, [cy, elements]);
-
   const handleNodeClick = useCallback((event: Cytoscape.EventObject) => {
-    try {
-      const node = event.target.data('node');
-      if (node) {
-        onNodeClick(node);
-      }
-    } catch (error) {
-      console.error('Node click error:', error);
-    }
+    const node = event.target.data('node');
+    if (node) onNodeClick(node);
   }, [onNodeClick]);
 
-  const handleZoomIn = useCallback(() => {
-    if (cy) {
-      const currentZoom = cy.zoom();
-      cy.zoom(currentZoom * 1.2);
+  const handleContextMenu = useCallback((event: Cytoscape.EventObject) => {
+    event.preventDefault();
+    const node = event.target.data('node');
+    if (node) {
+      const newName = prompt('Enter new name:', node.name || `Node ${node.id}`);
+      if (newName) onRename(node.id, newName);
     }
+  }, [onRename]);
+
+  const handleZoomIn = useCallback(() => {
+    if (cy) cy.zoom(cy.zoom() * 1.2);
   }, [cy]);
 
   const handleZoomOut = useCallback(() => {
-    if (cy) {
-      const currentZoom = cy.zoom();
-      cy.zoom(currentZoom * 0.8);
-    }
+    if (cy) cy.zoom(cy.zoom() * 0.8);
   }, [cy]);
 
   const handleFitView = useCallback(() => {
-    if (cy) {
-      cy.fit();
-    }
+    if (cy) cy.fit();
   }, [cy]);
 
   const initCytoscape = useCallback((cyInstance: Cytoscape.Core) => {
     if (!cyInstance) return;
-
     setCy(cyInstance);
-    cyInstance.removeListener('tap');  // Remove any existing listeners
+    cyInstance.removeListener('tap');
+    cyInstance.removeListener('cxttap');
     cyInstance.on('tap', 'node', handleNodeClick);
-
+    cyInstance.on('cxttap', 'node', handleContextMenu);
+    
     if (elements.length > 0) {
-      try {
-        cyInstance.layout({ 
-          name: 'circle',
-          padding: 50,
-          animate: true,
-        }).run();
-      } catch (error) {
-        console.error('Initial layout error:', error);
-      }
+      cyInstance.layout({
+        name: 'circle',
+        padding: 50,
+        animate: true,
+      }).run();
     }
-  }, [handleNodeClick, elements]);
+  }, [handleNodeClick, handleContextMenu, elements]);
 
-  // Cleanup effect
   useEffect(() => {
     return () => {
       if (cy) {
         cy.removeListener('tap');
+        cy.removeListener('cxttap');
         cy.destroy();
       }
     };

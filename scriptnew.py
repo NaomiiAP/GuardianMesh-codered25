@@ -3,7 +3,6 @@ import struct
 import time
 import json
 import threading
-import os
 import subprocess
 import logging
 
@@ -22,6 +21,7 @@ lock = threading.Lock()
 
 # Set up logging
 LOG_FILE_PATH = '/app/blacklisted_macs.log'
+ACTION_LOG_FILE_PATH = '/app/node_actions.log'
 logging.basicConfig(filename=LOG_FILE_PATH, level=logging.INFO, 
                     format='%(asctime)s - Blacklisted MAC: %(message)s')
 
@@ -77,28 +77,51 @@ def check_anomaly(key):
             isolated_nodes[key] = False
 
 def isolate_node(key):
-    """Simulate isolating the node by blocking its traffic."""
-    # In a real-world scenario, use firewall rules or Docker commands to block the node's network.
-    # Here we simulate it by printing the action.
-    print(f"Node {key} isolated. Blocking traffic.")
-
-    # Log the blacklisted MAC address
-    log_blacklisted_mac(key[0])
-
-    # Optionally, you could modify Docker network settings here to isolate the node:
-    # subprocess.run(["docker", "network", "disconnect", "my_network", f"hackathon-{key[0]}"])
-
+    """Dynamically isolate the Docker container corresponding to the node."""
+    src_mac = key[0]
+    container_name = mac_to_container(src_mac)
+    if container_name:
+        print(f"Isolating container: {container_name}")
+        subprocess.run(["docker", "network", "disconnect", "my_network", container_name])
+        log_blacklisted_mac(src_mac)
+        log_action("Isolated", src_mac)
+    else:
+        print(f"Container for MAC {src_mac} not found.")
 
 def recover_node(key):
-    """Simulate recovering the node by restoring its access."""
-    print(f"Node {key} recovered. Restoring traffic.")
+    """Dynamically recover the Docker container corresponding to the node."""
+    src_mac = key[0]
+    container_name = mac_to_container(src_mac)
+    if container_name:
+        print(f"Recovering container: {container_name}")
+        subprocess.run(["docker", "network", "connect", "my_network", container_name])
+        log_action("Recovered", src_mac)
+    else:
+        print(f"Container for MAC {src_mac} not found.")
 
-    # Optionally, you could modify Docker network settings to recover the node:
-    # subprocess.run(["docker", "network", "connect", "my_network", f"hackathon-{key[0]}"])
+def mac_to_container(mac_address):
+    """Map a MAC address to the corresponding Docker container name."""
+    try:
+        output = subprocess.check_output(["docker", "ps", "--format", "{{.Names}}"], text=True)
+        container_names = output.strip().split("\n")
+        
+        for container in container_names:
+            cmd = f"docker inspect --format '{{{{ .NetworkSettings.MacAddress }}}}' {container}"
+            container_mac = subprocess.check_output(cmd, shell=True, text=True).strip()
+            if container_mac.lower() == mac_address.lower():
+                return container
+    except subprocess.CalledProcessError as e:
+        print(f"Error while mapping MAC to container: {e}")
+    return None
 
 def log_blacklisted_mac(src_mac):
     """Log the blacklisted MAC address."""
     logging.info(src_mac)
+
+def log_action(action, mac_address):
+    """Log isolation or recovery actions."""
+    with open(ACTION_LOG_FILE_PATH, 'a') as log_file:
+        log_file.write(f"{time.asctime()}: {action} - {mac_address}\n")
 
 def capture_traffic():
     """Capture packets and extract required details."""
