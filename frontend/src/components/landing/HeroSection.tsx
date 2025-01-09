@@ -29,8 +29,7 @@ export function HeroSection() {
        
         <AnimatedText delay="200">
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Advanced IoT Network Security Simulation Platform with real-time threat detection
-            and automated response capabilities.
+          Real-Time IoT Cybersecurity for a Safer Connected World
           </p>
         </AnimatedText>
        
