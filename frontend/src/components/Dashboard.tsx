@@ -1,100 +1,71 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Header } from './Header';
-import { NetworkGraph } from './network/NetworkGraph';
-import { ControlPanel } from './control/ControlPanel';
-import { NotificationCenter } from './notifications/NotificationCenter';
-import { NodeMetricsCard } from './metrics/NodeMetricsCard';
-import { SimulationSettings } from '../types/simulation';
-import { Node } from '../types/node';
-import { mockNodes } from '../utils/mockData';
-import { useNotifications } from '../hooks/useNotifications';
-import { generateNode, resetNodeCounter } from '../utils/nodeGenerator';
+import React, { useState, useCallback, useEffect } from "react";
+import { Header } from "./Header";
+import { NetworkGraph } from "./network/NetworkGraph";
+import { NotificationCenter } from "./notifications/NotificationCenter";
+import { NodeMetricsCard } from "./metrics/NodeMetricsCard";
+import { Node } from "../types/node";
+import { mockNodes } from "../utils/mockData";
+import { useNotifications } from "../hooks/useNotifications";
+import { generateNode, resetNodeCounter } from "../utils/nodeGenerator";
+import axios from "axios";
 
 export function Dashboard() {
   const [isRunning, setIsRunning] = useState(false);
   const [nodes, setNodes] = useState<Node[]>(mockNodes);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [logOutput, setLogOutput] = useState<string | null>(null); // State for log output
   const { notifications, addNotification } = useNotifications();
-  const [settings, setSettings] = useState<SimulationSettings>({
-    nodeThreshold: 0.7,
-    recoveryTimeout: 5000,
-    faultInjectionRate: 0.3,
-  });
 
-  // Reset node counter when component mounts
   useEffect(() => {
     resetNodeCounter();
   }, []);
 
   const handleAddNode = useCallback(() => {
     const newNode = generateNode();
-    setNodes(prev => {
-      // Check if node with this ID already exists
-      if (prev.some(node => node.id === newNode.id)) {
-        console.error('Duplicate node ID generated');
+    setNodes((prev) => {
+      if (prev.some((node) => node.id === newNode.id)) {
+        console.error("Duplicate node ID generated");
         return prev;
       }
       return [...prev, newNode];
     });
-    
     addNotification(
-      'Node Added',
+      "Node Added",
       `Node ${newNode.id} has been added to the network`,
-      'info'
+      "info"
     );
   }, [addNotification]);
 
   const handleToggleSimulation = () => {
     setIsRunning(!isRunning);
     addNotification(
-      'Simulation Status',
-      `Simulation ${!isRunning ? 'started' : 'paused'}`,
+      "Simulation Status",
+      `Simulation ${!isRunning ? "started" : "paused"}`
     );
   };
 
   const handleReset = useCallback(() => {
     setNodes(mockNodes);
     setSelectedNode(null);
-    resetNodeCounter(); // Reset counter when resetting nodes
-    addNotification('Simulation Reset', 'All nodes restored to initial state');
+    resetNodeCounter();
+    addNotification("Simulation Reset", "All nodes restored to initial state");
   }, [addNotification]);
 
-  const handleInjectFault = useCallback(() => {
-    if (!selectedNode) {
-      addNotification(
-        'Error',
-        'Please select a node to inject fault',
-        'error'
-      );
-      return;
-    }
-    
-    setNodes(prev => prev.map(node => 
-      node.id === selectedNode.id
-        ? {
-            ...node,
-            status: 'compromised',
-            metrics: {
-              ...node.metrics,
-              anomalyScore: 0.9,
-              resourceUsage: 0.8,
-              latency: 150,
-            },
-            lastUpdated: new Date().toISOString(),
-          }
-        : node
-    ));
-    
-    addNotification(
-      'Fault Injected',
-      `Node ${selectedNode.id} has been compromised`,
-      'error'
-    );
-  }, [selectedNode, addNotification]);
+  const handleNodeClick = async (node: Node) => {
+    setSelectedNode(node);
 
-  // Clear selected node if it's removed
+    // Fetch log output dynamically based on node ID
+    try {
+      const response = await axios.get(`http://localhost:5000/run-log${node.id}`);
+      setLogOutput(response.data.output); // Dynamically fetch the log output
+    } catch (error) {
+      console.error("Error fetching log output:", error);
+      setLogOutput("Error fetching log output");
+    }
+  };
+
   useEffect(() => {
-    if (selectedNode && !nodes.some(node => node.id === selectedNode.id)) {
+    if (selectedNode && !nodes.some((node) => node.id === selectedNode.id)) {
       setSelectedNode(null);
     }
   }, [nodes, selectedNode]);
@@ -103,33 +74,43 @@ export function Dashboard() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       <NotificationCenter notifications={notifications} />
       <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <NetworkGraph 
-              nodes={nodes}
-              onNodeClick={setSelectedNode}
-              onAddNode={handleAddNode}
-            />
-          </div>
-          <div className="space-y-6">
-            <ControlPanel
-              settings={settings}
-              onSettingsChange={setSettings}
-              isRunning={isRunning}
-              onToggleSimulation={handleToggleSimulation}
-              onReset={handleReset}
-              onInjectFault={handleInjectFault}
-              selectedNode={selectedNode}
-            />
-            {selectedNode && (
-              <NodeMetricsCard
-                metrics={selectedNode.metrics}
-                lastUpdated={selectedNode.lastUpdated}
-              />
-            )}
-          </div>
+      <main className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 gap-4">
+        {/* Network Graph Section */}
+        <div className="flex-grow flex items-center justify-center w-2/3 h-[60vh] bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden text-white">
+          <NetworkGraph
+            nodes={nodes}
+            onNodeClick={handleNodeClick} // Pass handleNodeClick as the onNodeClick prop
+            onAddNode={handleAddNode}
+          />
         </div>
+
+        {/* Node Details Section */}
+        {selectedNode && (
+          <div className="w-1/3 bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg overflow-y-auto max-h-[calc(100vh-100px)] text-white">
+            <h2 className="text-xl font-bold mb-4">
+              Node {selectedNode.id} Details
+            </h2>
+            <p>
+              <strong>Status:</strong> {selectedNode.status}
+            </p>
+            <p>
+              <strong>Metrics:</strong>
+            </p>
+            <ul className="list-disc list-inside">
+              <li>Anomaly Score: {selectedNode.metrics.anomalyScore}</li>
+              <li>Resource Usage: {selectedNode.metrics.resourceUsage}</li>
+              <li>Latency: {selectedNode.metrics.latency} ms</li>
+            </ul>
+            <hr className="my-4" />
+            <h3 className="text-lg font-bold mb-2">Command Outputs</h3>
+            <div className="mt-4">
+              <strong>Log Output:</strong>
+              <pre className="bg-gray-700 p-2 rounded text-sm overflow-x-auto">
+                {logOutput || "No output available"}
+              </pre>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

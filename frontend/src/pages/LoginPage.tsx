@@ -4,6 +4,7 @@ import { Shield as ShieldIcon, Loader2 } from 'lucide-react';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Footer } from '../components/Footer';
 import { useAuth } from '../hooks/useAuth';
+import { Link } from 'react-router-dom';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -16,7 +17,7 @@ export function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setError('Please fill out both fields.');
+      setError('Please fill out all required fields.');
       return;
     }
 
@@ -24,7 +25,7 @@ export function LoginPage() {
       setIsLoading(true);
       setError('');
       await login(email, password);
-      navigate('/'); // Changed to navigate to landing page after login
+      navigate('/');
     } catch (err) {
       setError('Invalid credentials. Please try again.');
     } finally {
@@ -55,11 +56,13 @@ export function LoginPage() {
             <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-6">
               Welcome to Guardian Mesh
             </h2>
+            
             {error && (
               <div className="mb-4 p-3 rounded-md bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-center text-sm">
                 {error}
               </div>
             )}
+            
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label
@@ -117,6 +120,16 @@ export function LoginPage() {
                 )}
               </button>
             </form>
+            
+            <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+              Don't have an account?{' '}
+              <Link
+                to="/register"
+                className="text-indigo-600 dark:text-indigo-400 hover:underline"
+              >
+                Register here
+              </Link>
+            </p>
           </div>
         </div>
       </main>
