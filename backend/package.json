@@ -11,6 +11,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+<<<<<<< HEAD
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -18,5 +19,9 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.x.x",
     "mongoose": "^7.x.x"
+=======
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+>>>>>>> 83a0885a614fbad2a290d3c42e89f71512dbea5a
   }
 }
