@@ -1,0 +1,26 @@
+version: '3'
+services:
+  node1:
+    build: .
+    networks:
+      - my_network
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  node2:
+    build: .
+    networks:
+      - my_network
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  node3:
+    build: .
+    networks:
+      - my_network
+    environment:
+      - PYTHONUNBUFFERED=1
+
+networks:
+  my_network:
+    driver: bridge

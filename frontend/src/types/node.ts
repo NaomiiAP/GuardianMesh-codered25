@@ -31,4 +31,5 @@ export interface Node {
   lastUpdated: string;
   predictions: HealthPrediction[];
   comments: NodeComment[];
+  icon?: string; // Add the icon property here
 }
